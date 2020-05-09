@@ -1,4 +1,4 @@
-#include "BigInt.h"
+#include "include\BigInt.h"
 #include <algorithm>
 #include <sstream>
 #include <stdexcept>
@@ -33,6 +33,16 @@ BigInt::BigInt(std::string valueStr)
 			throw std::invalid_argument("Cannot convert the string to BigInt");
 		}
 	}
+}
+
+bool BigInt::operator==(const BigInt& other) const
+{
+	return this->_isPositive == other._isPositive && this->_digits == other._digits;
+}
+
+bool BigInt::operator!=(const BigInt& other) const
+{
+	return !(*this == other);
 }
 
 BigInt BigInt::operator+(const BigInt& other)
