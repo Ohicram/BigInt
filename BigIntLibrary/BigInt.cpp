@@ -1,83 +1,144 @@
-#include "include\BigInt.h"
 #include <algorithm>
+#include <iostream>
 #include <sstream>
+#include <string>
+#include <cmath>
 #include <stdexcept>
-BigInt::BigInt()
+#include <vector>
+
+#include "include\BigInt.h"
+
+#pragma region constructors
+BigInt::BigInt() : _sign(Sign::positive), _digits(1, 0)
 {
-	_digits.push_back(0);
-	_isPositive = true;
+	
 }
 
-BigInt::BigInt(long long value)
+BigInt::BigInt(long long num) : _sign(num >= 0 ? Sign::positive : Sign::negative)
 {
-	_isPositive = value >= 0;
-	while (value > 0) {
-		_digits.push_back(value % 10);
-		value /= 10;
-	}
+	// Remove the sign to easily push the digits without weird conversions and log10 operation
+	num = std::abs(num);
+	// Reserve space for the digits and set to 0 their 
+	const int n = num == 0 ? 1 : 1 + static_cast<int>(std::log10(num));
+	_digits.reserve(n);
+	do
+	{
+		_digits.push_back(num % 10);
+		num /= 10;
+	} while (num > 0);
 }
 
-BigInt::BigInt(std::string valueStr)
+BigInt::BigInt(const std::string& s) : _sign((s[0] == '-' && s[1] != '0') ? Sign::negative : Sign::positive)
 {
-	//@todo: handle different representation such as scientific notation
-	_isPositive = true;
-	for (auto itStr = valueStr.rbegin(); itStr != valueStr.rend(); ++itStr) {
-		if (*itStr >= '0' && *itStr <= '9') {
-			_digits.push_back(*itStr - '0');
-		}
-		else if (*itStr == '-' && itStr == --(valueStr.rend())) {
-			_isPositive = false;
-		}
+	_digits.reserve(s.length() + 1);
+	// Push back the string in reverse order
+	for(auto it = s.rbegin(); it != s.rend(); ++it)
+	{
+		if((it == s.rend()-1) && *it == '-')
+			continue;	// is eventually the last loop...
+		if (*it >= '0' && *it <= '9')
+			_digits.push_back(*it - '0');
 		else
-		{
-			throw std::invalid_argument("Cannot convert the string to BigInt");
-		}
+			throw std::exception("Invalid input format string for BigInt. Only digits [0-9] are allowed.");
+	}
+}
+#pragma endregion
+
+
+
+std::ostream& BigInt::operator<<(std::ostream& out) const
+{
+	out << static_cast<std::string>(*this);
+	return out;
+}
+
+#pragma region conversions
+/*
+ * This function convert a BigInt to std::string
+ */
+BigInt::operator std::string() const
+{
+	std::stringstream s("");
+	if (is_negative())
+		s << "-";
+	for(int k = 0; k < num_digits(); ++k)
+	{
+		s << static_cast<char>('0' + get_digit(k));
+	}
+	return s.str();
+}
+#pragma endregion
+
+
+bool BigInt::operator==(const BigInt& rhs) const
+{
+	return (this->_sign == rhs._sign && this->_digits == rhs._digits);
+}
+
+bool BigInt::operator!=(const BigInt& rhs) const
+{
+	return !(*this == rhs);
+}
+
+bool BigInt::operator<(const BigInt& rhs) const
+{
+	if(is_negative())
+	{
+		if (rhs.is_positive())
+			return true;
+		if (num_digits() < rhs.num_digits())
+			return false;
+		else if (num_digits() == rhs.num_digits())
+			return _digits > rhs._digits;
+		else
+			return true;
+	}
+	else
+	{
+		if (rhs.is_negative())
+			return false;
+		if (num_digits() < rhs.num_digits())
+			return true;
+		else if (num_digits() == rhs.num_digits())
+			return _digits < rhs._digits;
+		else
+			return false;
 	}
 }
 
-bool BigInt::operator==(const BigInt& other) const
+bool BigInt::operator>(const BigInt& rhs) const
 {
-	return this->_isPositive == other._isPositive && this->_digits == other._digits;
+	if (is_negative())
+	{
+		if (rhs.is_positive())
+			return false;
+		if (num_digits() < rhs.num_digits())
+			return true;
+		else if (num_digits() == rhs.num_digits())
+			return _digits < rhs._digits;
+		else
+			return false;
+	}
+	else
+	{
+		if (rhs.is_negative())
+			return true;
+		if (num_digits() < rhs.num_digits())
+			return false;
+		else if (num_digits() == rhs.num_digits())
+			return _digits > rhs._digits;
+		else
+			return true;
+	}
 }
 
-bool BigInt::operator!=(const BigInt& other) const
+bool BigInt::operator<=(const BigInt& rhs) const
 {
-	return !(*this == other);
+	return !(*this > rhs);
 }
 
-BigInt BigInt::operator+(const BigInt& other)
-{
-	//@todo: handle sign difference
-	BigInt res;
-	res._digits.clear();
-	res._digits.reserve(std::max(_digits.size(), other._digits.size() + 1));
-	uint8_t sum_remainder = 0;
-	for (size_t i = 0; i < std::max(_digits.size(), other._digits.size()); ++i) {
-		uint8_t tot = 0;
-		if (i < _digits.size() && i < other._digits.size()) {
-			tot = _digits[i] + other._digits[i] + sum_remainder;
-		}
-		else if (i < _digits.size()) {
-			tot = _digits[i] + sum_remainder;
-		}
-		else {
-			tot = other._digits[i] + sum_remainder;
-		}
-		res._digits.push_back(tot % 10);
-		sum_remainder = tot / 10;
-	}
-	if (sum_remainder > 0) {
-		res._digits.push_back(sum_remainder);
-	}
-	return res;
-}
 
-std::ostream& operator<<(std::ostream& os, BigInt const& number)
+bool BigInt::operator>=(const BigInt& rhs) const
 {
-	std::ostringstream ostr;
-	for (auto itStr = number._digits.rbegin(); itStr != number._digits.rend(); ++itStr) {
-		// Not working!     os << *itStr;
-		ostr << static_cast<char>(*itStr + '0');
-	}
-	return os << ostr.str();
+	return !(*this < rhs);
 }
