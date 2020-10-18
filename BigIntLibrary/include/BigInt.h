@@ -8,6 +8,8 @@ class vector;
 class string;
 #pragma endregion
 
+#define BIGINT_BASE 10
+
 enum class Sign
 {
 	positive,
@@ -17,13 +19,15 @@ enum class Sign
 class BigInt
 {
 private:
-	Sign _sign;
-	std::vector<uint8_t> _digits;
+	typedef uint8_t digit_t;
+	Sign m_sign;
+	std::vector<digit_t> m_digits;
 public:
 #pragma region constructors
 	BigInt();
 	BigInt(long long num);
 	BigInt(const std::string& s);
+	BigInt& operator=(const BigInt&) = default;
 #pragma endregion
 
 #pragma region input/output
@@ -33,51 +37,54 @@ public:
 #pragma endregion
 
 #pragma region arithmetic
-	//const BigInt& operator-=(const BigInt& rhs);
-	//const BigInt& operator+=(const BigInt& rhs);
-	//const BigInt& operator*=(const BigInt& rhs);
+	const BigInt& operator+=(const BigInt& rhs);
+	friend BigInt operator+(const BigInt& lhs, const BigInt& rhs);
+	const BigInt& operator-=(const BigInt& rhs);
+	friend BigInt operator-(const BigInt& lhs, const BigInt& rhs);
 #pragma endregion
 
 #pragma region comparison
-	bool operator==(const BigInt& rhs) const;
-	bool operator!=(const BigInt& rhs) const;
-	bool operator<(const BigInt& rhs) const;
-	bool operator>(const BigInt& rhs) const;
-	bool operator<=(const BigInt& rhs) const;
-	bool operator>=(const BigInt& rhs) const;
+friend bool operator==(const BigInt& lhs, const BigInt& rhs);
+friend bool operator!=(const BigInt& lhs, const BigInt& rhs);
+friend bool operator<(const BigInt& lhs, const BigInt& rhs);
+friend bool operator>(const BigInt& lhs, const BigInt& rhs);
+friend bool operator<=(const BigInt& lhs, const BigInt& rhs);
+friend bool operator>=(const BigInt& lhs, const BigInt& rhs);
 #pragma endregion
-
+	
 #pragma region conversions
 	operator std::string() const;
 #pragma endregion
 
 private:
+	const BigInt& remove_leading_zeros();
 #pragma region getters/setters
 	// These functions are intended to be modified in case of future refactoring
 	// All these functions are defined here to be inline
 	size_t num_digits() const
 	{
-		return _digits.size();
+		return m_digits.size();
 	}
 	int get_digit(int k) const
 	{
-		return _digits[k];
+		return k < num_digits() ? m_digits[k] : 0;
 	}
 	void change_digit(int k, int value)
 	{
-		_digits[k] = value;
+		m_digits[k] = value;
 	}
 	void add_digit(int value)
 	{
-		_digits.push_back(value);
+		m_digits.push_back(value);
 	}
 	bool is_positive() const
 	{
-		return _sign == Sign::positive;
+		return m_sign == Sign::positive;
 	}
 	bool is_negative() const
 	{
-		return _sign == Sign::negative;
+		return m_sign == Sign::negative;
 	}
 #pragma endregion 
 };
+

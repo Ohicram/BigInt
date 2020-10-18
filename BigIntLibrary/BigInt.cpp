@@ -9,35 +9,35 @@
 #include "include\BigInt.h"
 
 #pragma region constructors
-BigInt::BigInt() : _sign(Sign::positive), _digits(1, 0)
+BigInt::BigInt() : m_sign(Sign::positive), m_digits(1, 0)
 {
 	
 }
 
-BigInt::BigInt(long long num) : _sign(num >= 0 ? Sign::positive : Sign::negative)
+BigInt::BigInt(long long num) : m_sign(num >= 0 ? Sign::positive : Sign::negative)
 {
 	// Remove the sign to easily push the digits without weird conversions and log10 operation
 	num = std::abs(num);
 	// Reserve space for the digits and set to 0 their 
 	const int n = num == 0 ? 1 : 1 + static_cast<int>(std::log10(num));
-	_digits.reserve(n);
+	m_digits.reserve(n);
 	do
 	{
-		_digits.push_back(num % 10);
+		m_digits.push_back(num % 10);
 		num /= 10;
 	} while (num > 0);
 }
 
-BigInt::BigInt(const std::string& s) : _sign((s[0] == '-' && s[1] != '0') ? Sign::negative : Sign::positive)
+BigInt::BigInt(const std::string& s) : m_sign((s[0] == '-' && s[1] != '0') ? Sign::negative : Sign::positive)
 {
-	_digits.reserve(s.length() + 1);
+	m_digits.reserve(s.length() + 1);
 	// Push back the string in reverse order
 	for(auto it = s.rbegin(); it != s.rend(); ++it)
 	{
 		if((it == s.rend()-1) && *it == '-')
 			continue;	// is eventually the last loop...
 		if (*it >= '0' && *it <= '9')
-			_digits.push_back(*it - '0');
+			m_digits.push_back(*it - '0');
 		else
 			throw std::exception("Invalid input format string for BigInt. Only digits [0-9] are allowed.");
 	}
@@ -69,27 +69,121 @@ BigInt::operator std::string() const
 }
 #pragma endregion
 
-
-bool BigInt::operator==(const BigInt& rhs) const
+#pragma region operators
+const BigInt& BigInt::operator+=(const BigInt& rhs)
 {
-	return (this->_sign == rhs._sign && this->_digits == rhs._digits);
+	// If the operands do not share the same sign, subtract them
+	//		A   +   B
+	//	If (-A) + (+B) => (-A) - (-B)
+	//  Or (+A) + (-B) => (+A) - (+B)
+	if(this->m_sign != rhs.m_sign)
+	{
+		BigInt temp(rhs);
+		temp.m_sign = temp.is_positive() ? Sign::negative : Sign::positive;
+		return *this-=temp;
+	}
+	// The addition algorithm
+	// Get a pointer to smaller and larger BigInt operand
+	const auto max_n = std::max(this->num_digits(), rhs.num_digits());
+	// Perform the operation
+	int carry = 0;
+	int sum = 0;
+		for (auto i = 0; i < max_n; ++i)
+		{
+			sum = get_digit(i) + rhs.get_digit(i) + carry;
+			carry = sum / BIGINT_BASE;
+			if (i < num_digits())
+				change_digit(i, sum % BIGINT_BASE);
+			else
+				add_digit(sum % BIGINT_BASE);
+		}
+		if (carry > 0)
+		{
+			add_digit(1);
+		}
+		return *this;
 }
 
-bool BigInt::operator!=(const BigInt& rhs) const
+BigInt operator+(const BigInt& lhs, const BigInt& rhs)
 {
-	return !(*this == rhs);
+	BigInt result(lhs);
+	result += rhs;
+	return result;
 }
 
-bool BigInt::operator<(const BigInt& rhs) const
+const BigInt& BigInt::operator-=(const BigInt& rhs)
 {
-	if(is_negative())
+	// If they have different sign transform it in an addition by multiplying the rhs by -1
+	//		A   -   B
+	//	If (-A) - (+B) => (-A) + (-B)
+	//  Or (+A) - (-B) => (+A) + (+B)
+	if(this->m_sign != rhs.m_sign)
+	{
+		BigInt temp(rhs);
+		temp.m_sign = temp.is_positive() ? Sign::negative : Sign::positive;
+		return *this += temp;
+	}
+	// Handle the subtraction algorithm
+	// "swap" the operands to set the greater on the left side
+	if(is_positive() && (*this) < rhs || is_negative() && (*this) > rhs)
+	{
+		// switch operand order
+		*this = rhs - *this;
+		// switch sign
+		m_sign = is_positive() ? Sign::negative : Sign::positive;
+		return *this;
+	}
+	// Now we are in the case that *this is greater than rhs and we can subtract from it
+	int borrow = 0;
+	int diff = 0;
+	for(int i = 0; i < num_digits(); ++i)
+	{
+		diff = get_digit(i) - rhs.get_digit(i) - borrow;
+		if(diff < 0)
+		{
+			diff += BIGINT_BASE;
+			borrow = 1;
+		}
+		else
+		{
+			borrow = 0;
+		}
+		change_digit(i, diff);
+	}
+	remove_leading_zeros();
+	return *this;
+}
+
+BigInt operator-(const BigInt& lhs, const BigInt& rhs)
+{
+	BigInt result(lhs);
+	result -= rhs;
+	return result;
+}
+#pragma endregion 
+
+#pragma region comparisons
+
+bool operator==(const BigInt& lhs, const BigInt& rhs)
+{
+	return (lhs.m_sign == rhs.m_sign && lhs.m_digits == rhs.m_digits);
+}
+
+bool operator!=(const BigInt& lhs, const BigInt& rhs)
+{
+	return !(lhs == rhs);
+}
+
+bool operator<(const BigInt& lhs, const BigInt& rhs)
+{
+	if (lhs.is_negative())
 	{
 		if (rhs.is_positive())
 			return true;
-		if (num_digits() < rhs.num_digits())
+		if (lhs.num_digits() < rhs.num_digits())
 			return false;
-		else if (num_digits() == rhs.num_digits())
-			return _digits > rhs._digits;
+		else if (lhs.num_digits() == rhs.num_digits())
+			return lhs.m_digits > rhs.m_digits;
 		else
 			return true;
 	}
@@ -97,25 +191,25 @@ bool BigInt::operator<(const BigInt& rhs) const
 	{
 		if (rhs.is_negative())
 			return false;
-		if (num_digits() < rhs.num_digits())
+		if (lhs.num_digits() < rhs.num_digits())
 			return true;
-		else if (num_digits() == rhs.num_digits())
-			return _digits < rhs._digits;
+		else if (lhs.num_digits() == rhs.num_digits())
+			return lhs.m_digits < rhs.m_digits;
 		else
 			return false;
 	}
 }
 
-bool BigInt::operator>(const BigInt& rhs) const
+bool operator>(const BigInt& lhs, const BigInt& rhs)
 {
-	if (is_negative())
+	if (lhs.is_negative())
 	{
 		if (rhs.is_positive())
 			return false;
-		if (num_digits() < rhs.num_digits())
+		if (lhs.num_digits() < rhs.num_digits())
 			return true;
-		else if (num_digits() == rhs.num_digits())
-			return _digits < rhs._digits;
+		else if (lhs.num_digits() == rhs.num_digits())
+			return lhs.m_digits < rhs.m_digits;
 		else
 			return false;
 	}
@@ -123,22 +217,36 @@ bool BigInt::operator>(const BigInt& rhs) const
 	{
 		if (rhs.is_negative())
 			return true;
-		if (num_digits() < rhs.num_digits())
+		if (lhs.num_digits() < rhs.num_digits())
 			return false;
-		else if (num_digits() == rhs.num_digits())
-			return _digits > rhs._digits;
+		else if (lhs.num_digits() == rhs.num_digits())
+			return lhs.m_digits > rhs.m_digits;
 		else
 			return true;
 	}
 }
 
-bool BigInt::operator<=(const BigInt& rhs) const
+bool operator<=(const BigInt& lhs, const BigInt& rhs)
 {
-	return !(*this > rhs);
+	return !(lhs > rhs);
 }
 
-
-bool BigInt::operator>=(const BigInt& rhs) const
+bool operator>=(const BigInt& lhs, const BigInt& rhs)
 {
-	return !(*this < rhs);
+	return !(lhs < rhs);
+}
+#pragma endregion
+
+const BigInt& BigInt::remove_leading_zeros()
+{
+	int elements_to_remove = 0;
+	for (int i = static_cast<int>(num_digits()) - 1; i > 0 && get_digit(i) == 0; --i)
+		elements_to_remove++;
+	m_digits.erase(m_digits.end()-elements_to_remove, m_digits.end());
+
+	// If the result is zero force it to be positive
+	if (num_digits() == 1 && get_digit(0) == 0)
+		m_sign = Sign::positive;
+	
+	return *this;
 }
