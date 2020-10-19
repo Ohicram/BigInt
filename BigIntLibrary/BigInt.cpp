@@ -142,6 +142,11 @@ BigInt operator*(const BigInt& lhs, const BigInt& rhs)
 	return result;
 }
 
+const BigInt& BigInt::operator++()
+{
+	*this += BigInt(1);
+	return *this;
+}
 
 const BigInt& BigInt::operator+=(const BigInt& rhs)
 {
@@ -233,6 +238,42 @@ BigInt operator-(const BigInt& lhs, const BigInt& rhs)
 	result -= rhs;
 	return result;
 }
+
+const BigInt& BigInt::operator/=(const BigInt& rhs)
+{
+	if(rhs == 0)
+	{
+		throw std::runtime_error("Math error: Attempted to divide by Zero\n");
+	}
+	
+	// Compute the sign
+	const Sign result_sign = m_sign != rhs.m_sign ? Sign::negative : Sign::positive;	
+
+	// Simplify the computation striping out the sign
+	m_sign = Sign::positive;
+	BigInt rhsTemp(rhs);
+	rhsTemp.m_sign = Sign::positive;
+	// Count how many times rhsTemp is contained in *this
+	BigInt counter(0);
+	while(*this >= rhsTemp)
+	{
+		*this -= rhsTemp;
+		counter += 1;
+	}
+	// Restore the correct sign
+	counter.m_sign = result_sign;
+
+	*this = std::move(counter);
+	return *this;
+}
+
+BigInt operator/(const BigInt& lhs, const BigInt& rhs)
+{
+	BigInt result(lhs);
+	result /= rhs;
+	return result;
+}
+
 #pragma endregion 
 
 #pragma region comparisons

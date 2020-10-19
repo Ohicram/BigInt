@@ -80,8 +80,15 @@ TEST(Operators, PositiveAdditions) {
 	x += x;
 	EXPECT_EQ(x, 4);
 	EXPECT_EQ((BigInt(0) + BigInt(1)), 1);
+	EXPECT_EQ((BigInt(99) + BigInt(1)), 100);
 	EXPECT_EQ((BigInt(3) + BigInt(8)), 11);
 	EXPECT_EQ((BigInt(999) + BigInt(1)), 1000);
+	BigInt y = 0;
+	for(int i = 0; i < 123; ++i)
+	{
+		y += 1;
+	}
+	EXPECT_EQ(y, 123);
 }
 
 TEST(Operators, PositiveSubtractions) {
@@ -114,4 +121,18 @@ TEST(Operators, Multiplication) {
 	EXPECT_EQ((BigInt(12) * BigInt(12)), 144);
 	EXPECT_EQ((BigInt(12) * BigInt(10)), 120);
 	EXPECT_EQ((BigInt(-9) * BigInt(5)), -45);
+}
+
+TEST(Operators, Division) {
+	EXPECT_EQ((BigInt(100) / BigInt(5)), 20);
+	EXPECT_EQ((BigInt(100) / BigInt(100)), 1);
+	EXPECT_EQ((BigInt(100) / BigInt(1)), 100);
+	EXPECT_EQ((BigInt(81) / BigInt(9)), 9);
+
+	EXPECT_EQ((BigInt(256) / BigInt(-4)), -64);
+	EXPECT_EQ((BigInt(-3) / BigInt(2)), -1);
+	EXPECT_EQ((BigInt(89) / BigInt(9)), 9);
+	EXPECT_EQ((BigInt(0) / BigInt(129)), 0);
+	
+	EXPECT_ANY_THROW((BigInt(89) / BigInt(0)));
 }

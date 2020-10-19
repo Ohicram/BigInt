@@ -42,12 +42,17 @@ private:
 	friend BigInt operator*(const BigInt&  big, unsigned int num);
 	friend BigInt operator*(unsigned int num, const BigInt& big);
 public:
+	const BigInt& operator++();
 	const BigInt& operator+=(const BigInt& rhs);
 	friend BigInt operator+(const BigInt& lhs, const BigInt& rhs);
 	const BigInt& operator-=(const BigInt& rhs);
 	friend BigInt operator-(const BigInt& lhs, const BigInt& rhs);
 	const BigInt& operator*=(const BigInt& rhs);
 	friend BigInt operator*(const BigInt& lhs, const BigInt& rhs);
+	const BigInt& operator/=(const BigInt& rhs);
+	friend BigInt operator/(const BigInt& lhs, const BigInt& rhs);
+	const BigInt& operator%=(const BigInt& rhs);
+	friend BigInt operator%(const BigInt& lhs, const BigInt& rhs);
 #pragma endregion
 
 #pragma region comparison
