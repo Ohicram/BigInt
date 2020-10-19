@@ -131,8 +131,22 @@ TEST(Operators, Division) {
 
 	EXPECT_EQ((BigInt(256) / BigInt(-4)), -64);
 	EXPECT_EQ((BigInt(-3) / BigInt(2)), -1);
-	EXPECT_EQ((BigInt(89) / BigInt(9)), 9);
+	EXPECT_EQ((BigInt(-89) / BigInt(-9)), 9);
 	EXPECT_EQ((BigInt(0) / BigInt(129)), 0);
 	
 	EXPECT_ANY_THROW((BigInt(89) / BigInt(0)));
+}
+
+TEST(Operators, Modulo) {
+	EXPECT_EQ((BigInt(100) % BigInt(97)), 3);
+	EXPECT_EQ((BigInt(100) % BigInt(100)), 0);
+	EXPECT_EQ((BigInt(1023) % BigInt(2)), 1);
+	EXPECT_EQ((BigInt(123) % BigInt(100)), 23);
+
+	EXPECT_EQ((BigInt(256) % BigInt(-4)), 0);
+	EXPECT_EQ((BigInt(-3) % BigInt(2)), -1);
+	EXPECT_EQ((BigInt(-89) % BigInt(-9)), 8);
+	EXPECT_EQ((BigInt(0) % BigInt(129)), 0);
+
+	EXPECT_ANY_THROW((BigInt(89) % BigInt(0)));
 }

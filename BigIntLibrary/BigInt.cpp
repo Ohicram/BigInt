@@ -262,7 +262,9 @@ const BigInt& BigInt::operator/=(const BigInt& rhs)
 	}
 	// Restore the correct sign
 	counter.m_sign = result_sign;
-
+	// If the result is zero force it to be positive
+	if (num_digits() == 1 && get_digit(0) == 0)
+		m_sign = Sign::positive;
 	*this = std::move(counter);
 	return *this;
 }
@@ -271,6 +273,40 @@ BigInt operator/(const BigInt& lhs, const BigInt& rhs)
 {
 	BigInt result(lhs);
 	result /= rhs;
+	return result;
+}
+
+const BigInt& BigInt::operator%=(const BigInt& rhs)
+{
+	if (rhs == 0)
+	{
+		throw std::runtime_error("Math error: Attempted to divide by Zero\n");
+	}
+
+	// Compute the sign
+	const Sign result_sign = m_sign != rhs.m_sign ? Sign::negative : Sign::positive;
+
+	// Simplify the computation striping out the sign
+	m_sign = Sign::positive;
+	BigInt rhsTemp(rhs);
+	rhsTemp.m_sign = Sign::positive;
+	// Reduce itself until...
+	while (*this >= rhsTemp)
+	{
+		*this -= rhsTemp;
+	}
+	// Restore the correct sign
+	m_sign = result_sign;
+	// If the result is zero force it to be positive
+	if (num_digits() == 1 && get_digit(0) == 0)
+		m_sign = Sign::positive;
+	return *this;
+}
+
+BigInt operator%(const BigInt& lhs, const BigInt& rhs)
+{
+	BigInt result(lhs);
+	result %= rhs;
 	return result;
 }
 
