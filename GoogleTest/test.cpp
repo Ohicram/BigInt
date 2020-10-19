@@ -76,12 +76,18 @@ TEST(ComparisonOperators, LessThanEqual) {
 }
 
 TEST(Operators, PositiveAdditions) {
+	BigInt x = 2;
+	x += x;
+	EXPECT_EQ(x, 4);
 	EXPECT_EQ((BigInt(0) + BigInt(1)), 1);
 	EXPECT_EQ((BigInt(3) + BigInt(8)), 11);
 	EXPECT_EQ((BigInt(999) + BigInt(1)), 1000);
 }
 
 TEST(Operators, PositiveSubtractions) {
+	BigInt x = 351;
+	x -= x;
+	EXPECT_EQ(x, 0);
 	EXPECT_EQ((BigInt(1) - BigInt(1)) , 0);
 	EXPECT_EQ((BigInt(10) - BigInt(1)) , 9);
 	EXPECT_EQ((BigInt(5) - BigInt(8)), -3);
@@ -99,4 +105,13 @@ TEST(Operators, NegativeSubtractions) {
 	EXPECT_EQ((BigInt(-10) - BigInt(1)), -11);
 	EXPECT_EQ((BigInt(-5) - BigInt(8)), -13);
 	EXPECT_EQ((BigInt(999) - BigInt(-1000)), 1999);
+}
+
+TEST(Operators, Multiplication) {
+	EXPECT_EQ((BigInt(999) * BigInt(1)), 999);
+	EXPECT_EQ((BigInt(0) * BigInt(123456)), 0);
+	EXPECT_EQ((BigInt(6) * BigInt(6)), 36);
+	EXPECT_EQ((BigInt(12) * BigInt(12)), 144);
+	EXPECT_EQ((BigInt(12) * BigInt(10)), 120);
+	EXPECT_EQ((BigInt(-9) * BigInt(5)), -45);
 }

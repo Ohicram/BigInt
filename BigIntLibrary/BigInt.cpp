@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cassert>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -46,9 +47,9 @@ BigInt::BigInt(const std::string& s) : m_sign((s[0] == '-' && s[1] != '0') ? Sig
 
 
 
-std::ostream& BigInt::operator<<(std::ostream& out) const
+std::ostream& operator<<(std::ostream& out, const BigInt& big)
 {
-	out << static_cast<std::string>(*this);
+	out << static_cast<std::string>(big);
 	return out;
 }
 
@@ -70,6 +71,78 @@ BigInt::operator std::string() const
 #pragma endregion
 
 #pragma region operators
+const BigInt& BigInt::operator*=(unsigned int num)
+{
+	// This function perform the multiplication by a single digit (no sign check)
+	assert(num <= BIGINT_BASE);
+
+	// Multiplication by zero
+	if (num == 0)
+	{
+		*this = BigInt(0);
+		return *this;
+	}
+	// Multiplication by one
+	if(num == 1)
+	{
+		return *this;
+	}
+	// General case
+	int carry = 0;
+	int product = 0;
+	for(int i = 0; i < num_digits(); ++i)
+	{
+		product = num * get_digit(i) + carry;
+		carry = product / BIGINT_BASE;
+		change_digit(i, product % BIGINT_BASE);
+	}
+	while(carry > 0)
+	{
+		add_digit(carry % BIGINT_BASE);
+		carry /= BIGINT_BASE;
+	}
+	return *this;
+}
+
+const BigInt& BigInt::operator*=(const BigInt& rhs)
+{
+	// Compute the sign of the result
+	m_sign = m_sign != rhs.m_sign ? Sign::negative : Sign::positive;
+	// Copy itself to avoid aliasing
+	BigInt self(*this);
+	BigInt sum(0);
+
+	for(int i = 0; i < rhs.num_digits(); ++i)
+	{
+		sum += self * static_cast<unsigned int>(rhs.get_digit(i));
+		self*=static_cast<unsigned int>(BIGINT_BASE);
+	}
+	*this = sum;
+	return *this;
+}
+
+BigInt operator*(unsigned int num, const BigInt& big)
+{
+	BigInt result(big);
+	result *= num;
+	return result;
+}
+
+BigInt operator*(const BigInt& big, unsigned int num)
+{
+	BigInt result(big);
+	result *= num;
+	return result;
+}
+
+BigInt operator*(const BigInt& lhs, const BigInt& rhs)
+{
+	BigInt result(lhs);
+	result *= rhs;
+	return result;
+}
+
+
 const BigInt& BigInt::operator+=(const BigInt& rhs)
 {
 	// If the operands do not share the same sign, subtract them

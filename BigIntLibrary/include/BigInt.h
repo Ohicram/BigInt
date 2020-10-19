@@ -32,15 +32,22 @@ public:
 
 #pragma region input/output
 	//ostream& Print(ostream& os);
-	std::ostream& operator<<(std::ostream& out) const;
+	friend std::ostream& operator<<(std::ostream& out, const BigInt& big);
 	//istream& operator>>(istream& in, BigInt& big);
 #pragma endregion
 
 #pragma region arithmetic
+private:
+	const BigInt& operator*=(unsigned int num);
+	friend BigInt operator*(const BigInt&  big, unsigned int num);
+	friend BigInt operator*(unsigned int num, const BigInt& big);
+public:
 	const BigInt& operator+=(const BigInt& rhs);
 	friend BigInt operator+(const BigInt& lhs, const BigInt& rhs);
 	const BigInt& operator-=(const BigInt& rhs);
 	friend BigInt operator-(const BigInt& lhs, const BigInt& rhs);
+	const BigInt& operator*=(const BigInt& rhs);
+	friend BigInt operator*(const BigInt& lhs, const BigInt& rhs);
 #pragma endregion
 
 #pragma region comparison
@@ -65,7 +72,7 @@ private:
 	{
 		return m_digits.size();
 	}
-	int get_digit(int k) const
+	unsigned int get_digit(int k) const
 	{
 		return k < num_digits() ? m_digits[k] : 0;
 	}
