@@ -62,7 +62,7 @@ BigInt::operator std::string() const
 	std::stringstream s("");
 	if (is_negative())
 		s << "-";
-	for(int k = 0; k < num_digits(); ++k)
+	for(int k = num_digits()-1; k >= 0; --k)
 	{
 		s << static_cast<char>('0' + get_digit(k));
 	}
@@ -142,10 +142,37 @@ BigInt operator*(const BigInt& lhs, const BigInt& rhs)
 	return result;
 }
 
+BigInt BigInt::operator-()
+{
+	BigInt result{ *this };
+	result.m_sign = result.m_sign == Sign::positive ? Sign::negative : Sign::positive;
+	return result;
+}
+
 const BigInt& BigInt::operator++()
 {
 	*this += BigInt(1);
 	return *this;
+}
+
+const BigInt& BigInt::operator--()
+{
+	*this -= BigInt(1);
+	return *this;
+}
+
+BigInt BigInt::operator++(int)
+{
+	BigInt temp{ *this };
+	*this += BigInt(1);
+	return temp;
+}
+
+BigInt BigInt::operator--(int)
+{
+	BigInt temp{ *this };
+	*this -= BigInt(1);
+	return temp;
 }
 
 const BigInt& BigInt::operator+=(const BigInt& rhs)
@@ -307,6 +334,44 @@ BigInt operator%(const BigInt& lhs, const BigInt& rhs)
 {
 	BigInt result(lhs);
 	result %= rhs;
+	return result;
+}
+
+BigInt pow(const BigInt& base, const BigInt& exponent)
+{
+	if (exponent < 0)
+	{
+		throw std::exception("Negative exponents are not supported for BigInt types.");
+	}
+	if (exponent == 0)
+	{
+		return 1;
+	}
+	// Continue with the "normal" cases
+	BigInt result{ base };
+	for (BigInt i = 0; i < exponent; ++i)
+	{
+		result *= base;
+	}
+	return result;
+}
+
+BigInt pow(const BigInt& base, int exponent)
+{
+	if (exponent < 0)
+	{
+		throw std::exception("Negative exponents are not supported for BigInt types.");
+	}
+	if (exponent == 0)
+	{
+		return 1;
+	}
+	// Continue with the "normal" cases
+	BigInt result{ base };
+	for (BigInt i = 1; i < exponent; ++i)
+	{
+		result *= base;
+	}
 	return result;
 }
 

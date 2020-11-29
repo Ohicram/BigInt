@@ -27,7 +27,6 @@ public:
 	BigInt();
 	BigInt(long long num);
 	BigInt(const std::string& s);
-	BigInt& operator=(const BigInt&) = default;
 #pragma endregion
 
 #pragma region input/output
@@ -38,11 +37,18 @@ public:
 
 #pragma region arithmetic
 private:
+	// This operations are not exposed to the final user, because their
+	// functionality is restricted to single digit operation.
 	const BigInt& operator*=(unsigned int num);
 	friend BigInt operator*(const BigInt&  big, unsigned int num);
 	friend BigInt operator*(unsigned int num, const BigInt& big);
 public:
+	BigInt operator-();
+	BigInt operator++(int);
+	BigInt operator--(int);
+	// Returning const reference avoids complex and error prone syntax (++++x) (x+=y++)
 	const BigInt& operator++();
+	const BigInt& operator--();
 	const BigInt& operator+=(const BigInt& rhs);
 	friend BigInt operator+(const BigInt& lhs, const BigInt& rhs);
 	const BigInt& operator-=(const BigInt& rhs);
@@ -53,6 +59,10 @@ public:
 	friend BigInt operator/(const BigInt& lhs, const BigInt& rhs);
 	const BigInt& operator%=(const BigInt& rhs);
 	friend BigInt operator%(const BigInt& lhs, const BigInt& rhs);
+
+	// Should I define also "friend BigInt pow(BigInt&& base, const BigInt& exponent)";
+	friend BigInt pow(const BigInt& base, const BigInt& exponent);
+	friend BigInt pow(const BigInt& base, int exponent);
 #pragma endregion
 
 #pragma region comparison

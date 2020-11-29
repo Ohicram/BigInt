@@ -1,5 +1,7 @@
 #include "pch.h"
+
 #include "BigInt.h"
+#include <string>
 
 TEST(Constructors, EmptyConstructors) {
 	EXPECT_NO_THROW(BigInt bi);
@@ -91,6 +93,23 @@ TEST(Operators, PositiveAdditions) {
 	EXPECT_EQ(y, 123);
 }
 
+TEST(Operators, MinusSign) {
+	BigInt x = -8;
+	EXPECT_EQ(-x, 8);
+	EXPECT_EQ(-x-8, 0);
+	BigInt y = 8;
+	EXPECT_EQ(-y, -8);
+	EXPECT_EQ(-y+8, 0);
+}
+
+TEST(Operators, IncrementDecrementOperators) {
+	BigInt x = 0;
+	EXPECT_EQ(x++, 0);
+	EXPECT_EQ(++x, 2);
+	EXPECT_EQ(--x, 1);
+	EXPECT_EQ(x--, 1);
+}
+
 TEST(Operators, PositiveSubtractions) {
 	BigInt x = 351;
 	x -= x;
@@ -149,4 +168,25 @@ TEST(Operators, Modulo) {
 	EXPECT_EQ((BigInt(0) % BigInt(129)), 0);
 
 	EXPECT_ANY_THROW((BigInt(89) % BigInt(0)));
+}
+
+TEST(Math, Power) {
+	EXPECT_EQ(pow(BigInt(2), 2), 4);
+	EXPECT_EQ(pow(BigInt(2), 8), 256);
+	EXPECT_EQ(pow(BigInt(2), 0), 1);
+	EXPECT_EQ(pow(BigInt(1), 8), 1);
+	EXPECT_EQ(pow(BigInt(0), 8), 0);
+	EXPECT_EQ(pow(BigInt(0), BigInt(2)), 0);
+	EXPECT_EQ(pow(BigInt(3), BigInt(3)), 81);
+	EXPECT_EQ(pow(BigInt(3), BigInt(0)), 1);
+	EXPECT_ANY_THROW(pow(BigInt(2), -1));
+}
+
+TEST(Conversions, ToString) {
+	BigInt x = 129;
+	std::string s_x = x;
+	EXPECT_STREQ(s_x.c_str(), "129");
+	BigInt y = -9129;
+	std::string s_y = y;
+	EXPECT_STREQ(s_y.c_str(), "-9129");
 }
