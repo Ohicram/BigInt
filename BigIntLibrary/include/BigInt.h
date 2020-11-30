@@ -8,7 +8,7 @@ class vector;
 class string;
 #pragma endregion
 
-#define BIGINT_BASE 10
+#define BIGINT_BASE 256
 
 enum class Sign
 {
@@ -64,6 +64,11 @@ public:
 	friend BigInt pow(const BigInt& base, const BigInt& exponent);
 	friend BigInt pow(const BigInt& base, int exponent);
 #pragma endregion
+
+#pragma region bitwise-operators
+	const BigInt& operator&=(const BigInt& rhs);
+	friend BigInt operator&(const BigInt& lhs, const BigInt& rhs);
+#pragma endregion 
 
 #pragma region comparison
 friend bool operator==(const BigInt& lhs, const BigInt& rhs);

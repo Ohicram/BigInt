@@ -19,29 +19,53 @@ BigInt::BigInt(long long num) : m_sign(num >= 0 ? Sign::positive : Sign::negativ
 {
 	// Remove the sign to easily push the digits without weird conversions and log10 operation
 	num = std::abs(num);
+	if(num < BIGINT_BASE)
+	{
+		m_digits = std::vector<digit_t>(1, num);
+		return;
+	}
+	if(num == BIGINT_BASE)
+	{
+		m_digits = { 0, 1 };
+		return;
+	}
 	// Reserve space for the digits and set to 0 their 
-	const int n = num == 0 ? 1 : 1 + static_cast<int>(std::log10(num));
-	m_digits.reserve(n);
+	//const int n = num == 0 ? 1 : 1 + static_cast<int>(std::log10(num));
+	//m_digits.reserve(n);
+	BigInt temp = 0;
+	BigInt base = 1;
 	do
 	{
-		m_digits.push_back(num % 10);
+		//m_digits.push_back(num % 10);
+		temp += base*(num % 10);
 		num /= 10;
+		base *= 10;
 	} while (num > 0);
+	temp.m_sign = m_sign;
+	std::swap(*this, temp);
 }
 
-BigInt::BigInt(const std::string& s) : m_sign((s[0] == '-' && s[1] != '0') ? Sign::negative : Sign::positive)
+BigInt::BigInt(const std::string& s) : m_sign((s[0] == '-' && s[1] != '0') ? Sign::negative : Sign::positive), m_digits(1, 0)
 {
-	m_digits.reserve(s.length() + 1);
+	//m_digits.reserve(s.length() + 1);
 	// Push back the string in reverse order
+	BigInt temp = 0;
+	BigInt base = 1;
 	for(auto it = s.rbegin(); it != s.rend(); ++it)
 	{
 		if((it == s.rend()-1) && *it == '-')
 			continue;	// is eventually the last loop...
 		if (*it >= '0' && *it <= '9')
-			m_digits.push_back(*it - '0');
+		{
+			temp += base * (*it - '0');
+			base *= 10;
+			//m_digits.push_back(*it - '0');
+		}
 		else
 			throw std::exception("Invalid input format string for BigInt. Only digits [0-9] are allowed.");
 	}
+	temp.m_sign = m_sign;
+	std::swap(*this, temp);
 }
 #pragma endregion
 
@@ -60,13 +84,26 @@ std::ostream& operator<<(std::ostream& out, const BigInt& big)
 BigInt::operator std::string() const
 {
 	std::stringstream s("");
-	if (is_negative())
-		s << "-";
-	for(int k = num_digits()-1; k >= 0; --k)
+	//if (is_negative())
+	//	s << "-";
+	/*for(int k = num_digits()-1; k >= 0; --k)
 	{
 		s << static_cast<char>('0' + get_digit(k));
-	}
-	return s.str();
+	}*/
+	BigInt temp(*this);
+	temp.m_sign = Sign::positive;
+	do
+	{
+		//m_digits.push_back(num % 10);
+		BigInt remind = temp % 10;
+		s << static_cast<char>('0' + remind.get_digit(0));
+		temp /= 10;
+	} while (temp > 0);
+	if (is_negative())
+		s << "-";
+	const std::string reversed_string = s.str();
+	// Revert the string for human-reading
+	return std::string(reversed_string.rbegin(), reversed_string.rend());
 }
 #pragma endregion
 
@@ -164,14 +201,14 @@ const BigInt& BigInt::operator--()
 BigInt BigInt::operator++(int)
 {
 	BigInt temp{ *this };
-	*this += BigInt(1);
+	operator++();
 	return temp;
 }
 
 BigInt BigInt::operator--(int)
 {
 	BigInt temp{ *this };
-	*this -= BigInt(1);
+	operator--();
 	return temp;
 }
 
@@ -372,6 +409,38 @@ BigInt pow(const BigInt& base, int exponent)
 	{
 		result *= base;
 	}
+	return result;
+}
+
+#pragma endregion 
+
+#pragma region bitwise-operators
+
+const BigInt& BigInt::operator&=(const BigInt& rhs)
+{
+	const auto size_r = rhs.m_digits.size();
+	const auto size_l = m_digits.size();
+	for(int i = 0; i < std::max(size_r, size_l); ++i)
+	{
+		const auto digit_r = i < size_r ? rhs.get_digit(i) : 0;
+		const auto digit_l = i < size_l ? get_digit(i) : 0;
+		if(i < size_l)
+		{
+			m_digits[i] = digit_l & digit_r;
+		}
+		else
+		{
+			m_digits.push_back(digit_l & digit_r);
+		}
+	}
+	remove_leading_zeros();
+	return *this;
+}
+
+BigInt operator&(const BigInt& lhs, const BigInt& rhs)
+{
+	BigInt result(lhs);
+	result &= rhs;
 	return result;
 }
 

@@ -48,6 +48,7 @@ TEST(ComparisonOperators, Equality) {
 }
 
 TEST(ComparisonOperators, LessThan) {
+	EXPECT_TRUE(BigInt(-10) < BigInt(-9));
 	EXPECT_TRUE(BigInt("-10") < BigInt("-9"));
 	EXPECT_TRUE(BigInt("-9") < BigInt("-3"));
 	EXPECT_TRUE(BigInt("-10") < BigInt("10"));
@@ -189,4 +190,12 @@ TEST(Conversions, ToString) {
 	BigInt y = -9129;
 	std::string s_y = y;
 	EXPECT_STREQ(s_y.c_str(), "-9129");
+}
+
+TEST(Bitwise, And)
+{
+	EXPECT_EQ(BigInt(123) & BigInt(122), 122);
+	EXPECT_EQ(BigInt(74129) & BigInt(1), BigInt(1));
+	EXPECT_EQ(BigInt(1) & BigInt(74129), BigInt(1));
+	EXPECT_EQ(BigInt("123456789") & BigInt("123456789"), BigInt("123456789"));
 }
