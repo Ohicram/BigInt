@@ -498,23 +498,38 @@ BigInt& BigInt::operator<<=(std::size_t pos)
 	size_t extra = 0;
 	// Define the mask for the bit in the current digit
 	const size_t digit_mask = extra | ~digit_t{ 0 };
-	for(int i = 0; i < m_digits.size(); ++i)
+	// Shift the maximum and re-iterate
+	while (pos > 0)
 	{
-		size_t d = get_digit(i);
-		size_t d_shifted = d << pos;
-		// The shifted bits should contains the bits shifted from the previous digit
-		size_t new_d = (d_shifted | extra) & digit_mask;		
-		m_digits[i] = static_cast<digit_t>(new_d);
-		// The bits that are shifted on the space for the next digits, are moved back
-		// in the space of current digit, for the next iteration
-		extra = d_shifted;
-		extra >>= (8 * sizeof(digit_t));
-	}
-	// If the shifted bit exceeds the current capacity, add then at the end
-	while(extra > 0)
-	{
-		m_digits.push_back(static_cast<digit_t>(extra));
-		extra >>= (8 * sizeof(digit_t));
+		size_t shiftpos = 0;
+		if(pos >= sizeof(size_t)*8)
+		{
+			shiftpos = (sizeof(size_t) * 8)/2;
+			pos -= (sizeof(size_t) * 8)/2;
+		}
+		else
+		{
+			shiftpos = pos;
+			pos = 0;
+		}
+		for (int i = 0; i < m_digits.size(); ++i)
+		{
+			size_t d = get_digit(i);
+			size_t d_shifted = d << shiftpos;
+			// The shifted bits should contains the bits shifted from the previous digit
+			size_t new_d = (d_shifted | extra) & digit_mask;
+			m_digits[i] = static_cast<digit_t>(new_d);
+			// The bits that are shifted on the space for the next digits, are moved back
+			// in the space of current digit, for the next iteration
+			extra = d_shifted;
+			extra >>= (8 * sizeof(digit_t));
+		}
+		// If the shifted bit exceeds the current capacity, add then at the end
+		while (extra > 0)
+		{
+			m_digits.push_back(static_cast<digit_t>(extra & digit_mask));
+			extra >>= (8 * sizeof(digit_t));
+		}
 	}
 	return *this;
 }

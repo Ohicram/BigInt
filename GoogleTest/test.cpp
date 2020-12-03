@@ -225,4 +225,7 @@ TEST(Bitwise, Shift)
 		xt <<= 1;
 		EXPECT_EQ(x, xt);
 	}
+	xt = 1;
+	xt <<= 70;
+	EXPECT_EQ(x, xt);
 }
