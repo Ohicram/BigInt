@@ -215,7 +215,7 @@ TEST(Bitwise, Xor)
 	EXPECT_EQ(BigInt("123456789") ^ BigInt("123456789"), BigInt("0"));
 }
 
-TEST(Bitwise, Shift)
+TEST(Bitwise, LeftShift)
 {
 	BigInt x = 1;
 	BigInt xt = 1;
@@ -228,4 +228,15 @@ TEST(Bitwise, Shift)
 	xt = 1;
 	xt <<= 70;
 	EXPECT_EQ(x, xt);
+}
+
+TEST(Bitwise, RightShift)
+{
+	EXPECT_EQ(BigInt(512) >> 1, BigInt(256));
+	EXPECT_EQ(BigInt(256) >> 1, BigInt(128));
+	EXPECT_EQ(BigInt(8) >> 4, BigInt(0));
+	EXPECT_EQ(BigInt(9) >> 1, BigInt(4));
+	BigInt xt = 1;
+	xt <<= 70;
+	EXPECT_EQ(xt >> 68, 4);
 }

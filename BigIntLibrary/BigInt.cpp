@@ -543,35 +543,28 @@ BigInt BigInt::operator<<(std::size_t pos) const
 
 BigInt& BigInt::operator>>=(std::size_t pos)
 {
-	size_t extra = 0;
-	// Define the mask for the bit in the next digit
-	const size_t extra_mask = extra | ~digit_t{0};
-	// Define the mask for the bit in the current digit
-	const size_t digit_mask = ~extra_mask;
-	for (int i = m_digits.size()-1; i >= 0; --i)
+	const size_t digit_bits = 8 * sizeof(digit_t);
+	const size_t elements_to_remove = pos / digit_bits;
+	// All those digits will be lost
+	m_digits.erase(m_digits.begin(), m_digits.begin() + elements_to_remove);
+	// The shift is now decreased with the remaining bits to shift
+	pos %= digit_bits;	
+	digit_t extra = 0;
+	const size_t pos_left = digit_bits - pos;
+	for (int i = m_digits.size() - 1; i >= 0; --i)
 	{
-		size_t d = get_digit(i);
-		size_t d_shifted = d << pos;
-		// The shifted bits should contains the bits shifted from the previous digit
-		size_t new_d = (d_shifted | extra) & digit_mask;
-		m_digits[i] = static_cast<digit_t>(new_d);
-		// The bits that are shifted on the space for the next digit, are moved back
-		// in the space of current digit, for the next iteration
-		extra = d_shifted & extra_mask;
-		extra >>= (8 * sizeof(digit_t));
+		const digit_t d_i = get_digit(i);
+		m_digits[i] = (d_i >> pos) | extra;
+		extra = d_i << pos_left;
 	}
-	// If the shifted bit exceeds the current capacity, add then at the end
-	if (extra > 0)
-	{
-		m_digits.push_back(static_cast<digit_t>(extra));
-	}
+	remove_leading_zeros();
 	return *this;
 }
 
 BigInt BigInt::operator>>(std::size_t pos) const
 {
 	BigInt result(*this);
-	result <<= pos;
+	result >>= pos;
 	return result;
 }
 
