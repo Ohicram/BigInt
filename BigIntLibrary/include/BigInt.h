@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <functional>
 
 #pragma region forward-declarations
 class ostream;
@@ -9,6 +10,7 @@ class string;
 #pragma endregion
 
 #define BIGINT_BASE 256
+
 
 enum class Sign
 {
@@ -66,8 +68,20 @@ public:
 #pragma endregion
 
 #pragma region bitwise-operators
+private:
+	void perform_bitwise(const BigInt& rhs, std::function<uint8_t(uint8_t, uint8_t)>);
+public:
 	const BigInt& operator&=(const BigInt& rhs);
 	friend BigInt operator&(const BigInt& lhs, const BigInt& rhs);
+	const BigInt& operator|=(const BigInt& rhs);
+	friend BigInt operator|(const BigInt& lhs, const BigInt& rhs);
+	const BigInt& operator^=(const BigInt& rhs);
+	friend BigInt operator^(const BigInt& lhs, const BigInt& rhs);
+
+	BigInt& operator<<=(std::size_t pos);
+	BigInt operator<<(std::size_t pos) const;
+	BigInt& operator>>=(std::size_t pos);
+	BigInt operator>>(std::size_t pos) const;
 #pragma endregion 
 
 #pragma region comparison

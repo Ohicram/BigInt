@@ -199,3 +199,30 @@ TEST(Bitwise, And)
 	EXPECT_EQ(BigInt(1) & BigInt(74129), BigInt(1));
 	EXPECT_EQ(BigInt("123456789") & BigInt("123456789"), BigInt("123456789"));
 }
+
+TEST(Bitwise, Or)
+{
+	EXPECT_EQ(BigInt(256) | BigInt(1), 257);
+	EXPECT_EQ(BigInt(74128) | BigInt(1), BigInt(74129));
+	EXPECT_EQ(BigInt(178945) | BigInt(0), BigInt(178945));
+	EXPECT_EQ(BigInt("123456789") | BigInt("123456789"), BigInt("123456789"));
+}
+
+TEST(Bitwise, Xor)
+{
+	EXPECT_EQ(BigInt(259) ^ BigInt(1), 258);
+	EXPECT_EQ(BigInt(257) ^ BigInt(256), BigInt(1));
+	EXPECT_EQ(BigInt("123456789") ^ BigInt("123456789"), BigInt("0"));
+}
+
+TEST(Bitwise, Shift)
+{
+	BigInt x = 1;
+	BigInt xt = 1;
+	for(int i = 0; i < 70; ++i)
+	{
+		x *= BigInt(2);
+		xt <<= 1;
+		EXPECT_EQ(x, xt);
+	}
+}

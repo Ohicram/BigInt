@@ -1,10 +1,11 @@
 #include <algorithm>
 #include <cassert>
+#include <cmath>
+#include <functional>
 #include <iostream>
 #include <sstream>
-#include <string>
-#include <cmath>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 #include "include\BigInt.h"
@@ -416,9 +417,29 @@ BigInt pow(const BigInt& base, int exponent)
 
 #pragma region bitwise-operators
 
-const BigInt& BigInt::operator&=(const BigInt& rhs)
+void BigInt::perform_bitwise(const BigInt& rhs, std::function<uint8_t(uint8_t, uint8_t)> bw_operator)
 {
 	const auto size_r = rhs.m_digits.size();
+	const auto size_l = m_digits.size();
+	for (int i = 0; i < std::max(size_r, size_l); ++i)
+	{
+		const auto digit_r = i < size_r ? rhs.get_digit(i) : 0;
+		const auto digit_l = i < size_l ? get_digit(i) : 0;
+		if (i < size_l)
+		{
+			m_digits[i] = bw_operator(digit_l, digit_r);
+		}
+		else
+		{
+			m_digits.push_back(bw_operator(digit_l, digit_r));
+		}
+	}
+	remove_leading_zeros();
+}
+
+const BigInt& BigInt::operator&=(const BigInt& rhs)
+{
+	/*const auto size_r = rhs.m_digits.size();
 	const auto size_l = m_digits.size();
 	for(int i = 0; i < std::max(size_r, size_l); ++i)
 	{
@@ -434,6 +455,8 @@ const BigInt& BigInt::operator&=(const BigInt& rhs)
 		}
 	}
 	remove_leading_zeros();
+	return *this;*/
+	perform_bitwise(rhs, std::bit_and<uint8_t>());
 	return *this;
 }
 
@@ -441,6 +464,99 @@ BigInt operator&(const BigInt& lhs, const BigInt& rhs)
 {
 	BigInt result(lhs);
 	result &= rhs;
+	return result;
+}
+
+const BigInt& BigInt::operator|=(const BigInt& rhs)
+{
+	perform_bitwise(rhs, std::bit_or<uint8_t>());
+	return *this;
+}
+
+BigInt operator|(const BigInt& lhs, const BigInt& rhs)
+{
+	BigInt result(lhs);
+	result |= rhs;
+	return result;
+}
+
+BigInt operator^(const BigInt& lhs, const BigInt& rhs)
+{
+	BigInt result(lhs);
+	result ^= rhs;
+	return result;
+}
+
+const BigInt& BigInt::operator^=(const BigInt& rhs)
+{
+	perform_bitwise(rhs, std::bit_xor<uint8_t>());
+	return *this;
+}
+
+BigInt& BigInt::operator<<=(std::size_t pos)
+{
+	size_t extra = 0;
+	// Define the mask for the bit in the current digit
+	const size_t digit_mask = extra | ~digit_t{ 0 };
+	for(int i = 0; i < m_digits.size(); ++i)
+	{
+		size_t d = get_digit(i);
+		size_t d_shifted = d << pos;
+		// The shifted bits should contains the bits shifted from the previous digit
+		size_t new_d = (d_shifted | extra) & digit_mask;		
+		m_digits[i] = static_cast<digit_t>(new_d);
+		// The bits that are shifted on the space for the next digits, are moved back
+		// in the space of current digit, for the next iteration
+		extra = d_shifted;
+		extra >>= (8 * sizeof(digit_t));
+	}
+	// If the shifted bit exceeds the current capacity, add then at the end
+	while(extra > 0)
+	{
+		m_digits.push_back(static_cast<digit_t>(extra));
+		extra >>= (8 * sizeof(digit_t));
+	}
+	return *this;
+}
+
+BigInt BigInt::operator<<(std::size_t pos) const
+{
+	BigInt result(*this);
+	result <<= pos;
+	return result;
+}
+
+BigInt& BigInt::operator>>=(std::size_t pos)
+{
+	size_t extra = 0;
+	// Define the mask for the bit in the next digit
+	const size_t extra_mask = extra | ~digit_t{0};
+	// Define the mask for the bit in the current digit
+	const size_t digit_mask = ~extra_mask;
+	for (int i = m_digits.size()-1; i >= 0; --i)
+	{
+		size_t d = get_digit(i);
+		size_t d_shifted = d << pos;
+		// The shifted bits should contains the bits shifted from the previous digit
+		size_t new_d = (d_shifted | extra) & digit_mask;
+		m_digits[i] = static_cast<digit_t>(new_d);
+		// The bits that are shifted on the space for the next digit, are moved back
+		// in the space of current digit, for the next iteration
+		extra = d_shifted & extra_mask;
+		extra >>= (8 * sizeof(digit_t));
+	}
+	// If the shifted bit exceeds the current capacity, add then at the end
+	if (extra > 0)
+	{
+		m_digits.push_back(static_cast<digit_t>(extra));
+	}
+	return *this;
+}
+
+BigInt BigInt::operator>>(std::size_t pos) const
+{
+	BigInt result(*this);
+	result <<= pos;
 	return result;
 }
 
