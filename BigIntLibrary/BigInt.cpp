@@ -495,42 +495,26 @@ const BigInt& BigInt::operator^=(const BigInt& rhs)
 
 BigInt& BigInt::operator<<=(std::size_t pos)
 {
-	size_t extra = 0;
-	// Define the mask for the bit in the current digit
-	const size_t digit_mask = extra | ~digit_t{ 0 };
-	// Shift the maximum and re-iterate
-	while (pos > 0)
+	const size_t digit_bits = 8 * sizeof(digit_t);
+	const size_t elements_to_insert = pos / digit_bits;
+	// The shift is now decreased with the remaining bits to shift
+	pos %= digit_bits;
+	digit_t extra = 0;
+	const size_t pos_right = digit_bits - pos;
+	for (int i = 0; i < m_digits.size(); ++i)
 	{
-		size_t shiftpos = 0;
-		if(pos >= sizeof(size_t)*8)
-		{
-			shiftpos = (sizeof(size_t) * 8)/2;
-			pos -= (sizeof(size_t) * 8)/2;
-		}
-		else
-		{
-			shiftpos = pos;
-			pos = 0;
-		}
-		for (int i = 0; i < m_digits.size(); ++i)
-		{
-			size_t d = get_digit(i);
-			size_t d_shifted = d << shiftpos;
-			// The shifted bits should contains the bits shifted from the previous digit
-			size_t new_d = (d_shifted | extra) & digit_mask;
-			m_digits[i] = static_cast<digit_t>(new_d);
-			// The bits that are shifted on the space for the next digits, are moved back
-			// in the space of current digit, for the next iteration
-			extra = d_shifted;
-			extra >>= (8 * sizeof(digit_t));
-		}
-		// If the shifted bit exceeds the current capacity, add then at the end
-		while (extra > 0)
-		{
-			m_digits.push_back(static_cast<digit_t>(extra & digit_mask));
-			extra >>= (8 * sizeof(digit_t));
-		}
+		const digit_t d_i = get_digit(i);
+		m_digits[i] = (d_i << pos) | extra;
+		extra = d_i >> pos_right;
 	}
+	if(extra > 0)
+	{
+		m_digits.push_back(extra);
+	}
+	// Insert shifted zeroes
+	std::vector<digit_t> zeroes(elements_to_insert, 0);
+	m_digits.insert(m_digits.begin(), zeroes.begin(), zeroes.end());
+	remove_leading_zeros();
 	return *this;
 }
 

@@ -223,7 +223,7 @@ TEST(Bitwise, LeftShift)
 	{
 		x *= BigInt(2);
 		xt <<= 1;
-		EXPECT_EQ(x, xt);
+		EXPECT_EQ(xt, x);
 	}
 	xt = 1;
 	xt <<= 70;
