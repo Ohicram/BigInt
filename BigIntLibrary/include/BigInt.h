@@ -11,7 +11,6 @@ class string;
 
 #define BIGINT_BASE 256
 
-
 enum class Sign
 {
 	positive,
@@ -44,6 +43,8 @@ private:
 	const BigInt& operator*=(unsigned int num);
 	friend BigInt operator*(const BigInt&  big, unsigned int num);
 	friend BigInt operator*(unsigned int num, const BigInt& big);
+
+	friend void iterative_subtraction_division(const BigInt& lhs, const BigInt& rhs, BigInt& out_quotient, BigInt& out_reminder);
 public:
 	BigInt operator-();
 	BigInt operator++(int);

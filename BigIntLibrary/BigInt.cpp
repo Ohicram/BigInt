@@ -304,33 +304,63 @@ BigInt operator-(const BigInt& lhs, const BigInt& rhs)
 	return result;
 }
 
-const BigInt& BigInt::operator/=(const BigInt& rhs)
+void iterative_subtraction_division(const BigInt& lhs, const BigInt& rhs, BigInt& out_quotient, BigInt& out_reminder)
 {
-	if(rhs == 0)
+	if (rhs == 0)
 	{
 		throw std::runtime_error("Math error: Attempted to divide by Zero\n");
 	}
-	
-	// Compute the sign
-	const Sign result_sign = m_sign != rhs.m_sign ? Sign::negative : Sign::positive;	
 
-	// Simplify the computation striping out the sign
-	m_sign = Sign::positive;
+	// Compute the sign
+	const Sign result_sign = lhs.m_sign != rhs.m_sign ? Sign::negative : Sign::positive;
+
 	BigInt rhsTemp(rhs);
 	rhsTemp.m_sign = Sign::positive;
 	// Count how many times rhsTemp is contained in *this
-	BigInt counter(0);
-	while(*this >= rhsTemp)
+	out_quotient = 0;
+	out_reminder = lhs;
+	// Simplify the computation striping out the sign
+	out_reminder.m_sign = Sign::positive;
+	while (out_reminder >= rhsTemp)
 	{
-		*this -= rhsTemp;
-		counter += 1;
+		out_reminder -= rhsTemp;
+		out_quotient += 1;
 	}
 	// Restore the correct sign
-	counter.m_sign = result_sign;
-	// If the result is zero force it to be positive
-	if (num_digits() == 1 && get_digit(0) == 0)
-		m_sign = Sign::positive;
-	*this = std::move(counter);
+	out_quotient.m_sign = result_sign;
+}
+
+const BigInt& BigInt::operator/=(const BigInt& rhs)
+{
+/*	BigInt quotient;
+	BigInt reminder;
+	iterative_subtraction_division(*this, rhs, quotient, reminder);
+	std::swap(*this, quotient);
+	return *this;*/
+	const Sign result_sign = this->m_sign != rhs.m_sign ? Sign::negative : Sign::positive;
+	BigInt temp_rhs(rhs);
+	temp_rhs.m_sign = Sign::positive;
+	BigInt temp(*this);
+	temp.m_sign = Sign::positive;
+	BigInt dividend = 0;
+	BigInt result = 0;
+	BigInt quotient;
+	BigInt reminder = 0;
+	while(temp.m_digits.size() > 0)
+	{
+		dividend *= BIGINT_BASE;
+		dividend += temp.m_digits.back();
+		result *= BIGINT_BASE;
+		if (dividend >= temp_rhs)
+		{
+			iterative_subtraction_division(dividend, temp_rhs, quotient, reminder);
+			result += quotient;
+			dividend = reminder;
+		}
+		temp.m_digits.pop_back();
+	}
+	std::swap(*this, result);
+	this->m_sign = result_sign;
 	return *this;
 }
 
@@ -343,28 +373,31 @@ BigInt operator/(const BigInt& lhs, const BigInt& rhs)
 
 const BigInt& BigInt::operator%=(const BigInt& rhs)
 {
-	if (rhs == 0)
+	const Sign result_sign = this->m_sign != rhs.m_sign ? Sign::negative : Sign::positive;
+	BigInt temp_rhs(rhs);
+	temp_rhs.m_sign = Sign::positive;
+	BigInt temp(*this);
+	temp.m_sign = Sign::positive;
+	BigInt dividend = 0;
+	BigInt result = 0;
+	BigInt quotient;
+	BigInt reminder = 0;
+	while (temp.m_digits.size() > 0)
 	{
-		throw std::runtime_error("Math error: Attempted to divide by Zero\n");
+		dividend *= BIGINT_BASE;
+		dividend += temp.m_digits.back();
+		result *= BIGINT_BASE;
+		if (dividend >= temp_rhs)
+		{
+			iterative_subtraction_division(dividend, temp_rhs, quotient, reminder);
+			result += quotient;
+			dividend = reminder;
+		}
+		temp.m_digits.pop_back();
 	}
-
-	// Compute the sign
-	const Sign result_sign = m_sign != rhs.m_sign ? Sign::negative : Sign::positive;
-
-	// Simplify the computation striping out the sign
-	m_sign = Sign::positive;
-	BigInt rhsTemp(rhs);
-	rhsTemp.m_sign = Sign::positive;
-	// Reduce itself until...
-	while (*this >= rhsTemp)
-	{
-		*this -= rhsTemp;
-	}
-	// Restore the correct sign
-	m_sign = result_sign;
-	// If the result is zero force it to be positive
-	if (num_digits() == 1 && get_digit(0) == 0)
-		m_sign = Sign::positive;
+	std::swap(*this, dividend);
+	this->m_sign = result_sign;
+	remove_leading_zeros();
 	return *this;
 }
 

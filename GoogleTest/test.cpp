@@ -144,6 +144,8 @@ TEST(Operators, Multiplication) {
 }
 
 TEST(Operators, Division) {
+	EXPECT_EQ((BigInt("99999999999999999999") / BigInt(1)), BigInt("99999999999999999999"));
+	EXPECT_EQ((BigInt(10) / BigInt(9)), 1);
 	EXPECT_EQ((BigInt(100) / BigInt(5)), 20);
 	EXPECT_EQ((BigInt(100) / BigInt(100)), 1);
 	EXPECT_EQ((BigInt(100) / BigInt(1)), 100);
