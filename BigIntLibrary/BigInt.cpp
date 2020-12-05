@@ -180,7 +180,7 @@ BigInt operator*(const BigInt& lhs, const BigInt& rhs)
 	return result;
 }
 
-BigInt BigInt::operator-()
+BigInt BigInt::operator-() const
 {
 	BigInt result{ *this };
 	result.m_sign = result.m_sign == Sign::positive ? Sign::negative : Sign::positive;

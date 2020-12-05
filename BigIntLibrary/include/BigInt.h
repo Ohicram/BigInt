@@ -46,7 +46,7 @@ private:
 
 	friend void iterative_subtraction_division(const BigInt& lhs, const BigInt& rhs, BigInt& out_quotient, BigInt& out_reminder);
 public:
-	BigInt operator-();
+	BigInt operator-() const;
 	BigInt operator++(int);
 	BigInt operator--(int);
 	// Returning const reference avoids complex and error prone syntax (++++x) (x+=y++)
@@ -63,7 +63,6 @@ public:
 	const BigInt& operator%=(const BigInt& rhs);
 	friend BigInt operator%(const BigInt& lhs, const BigInt& rhs);
 
-	// Should I define also "friend BigInt pow(BigInt&& base, const BigInt& exponent)";
 	friend BigInt pow(const BigInt& base, const BigInt& exponent);
 	friend BigInt pow(const BigInt& base, int exponent);
 #pragma endregion
